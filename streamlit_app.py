@@ -11,7 +11,7 @@ st.set_page_config(
     layout="centered",
 )
 
-# --- CSS CUSTOM: BACKGROUND TAMAN & ANIMASI ---
+# --- CSS CUSTOM: BACKGROUND TAMAN, ANIMASI & FRAME FOTO ---
 st.markdown(
     """
     <style>
@@ -47,6 +47,37 @@ st.markdown(
         font-weight: bold;
         text-shadow: 1px 1px 2px #ffffff;
         margin-top: 15px;
+    }
+
+    /* Card Profil Guru Tema Perpus Ceria */
+    .teacher-card {
+        background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+        border: 4px solid #F59E0B;
+        border-radius: 20px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+        margin: 10px auto;
+    }
+    .teacher-name {
+        color: #1E3A8A;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 2px;
+    }
+    .teacher-title {
+        color: #D97706;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* Style untuk Efek Bingkai Foto */
+    .stImage img {
+        border-radius: 15px;
+        border: 3px solid #FBBF24;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.12);
     }
 
     /* Card Form dengan Efek Transparan Segar */
@@ -96,17 +127,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. FOTO GURU PERPUSTAKAAN (DIBAWAH JUDUL UTAMA & PAS DI TENGAH)
-col_left, col_center, col_right = st.columns([1, 1.5, 1])
+# 2. FOTO & KARTU PROFIL GURU KOORDINATOR PERPUSTAKAAN
+col_left, col_center, col_right = st.columns([1, 1.6, 1])
 with col_center:
+    st.markdown("<div class='teacher-card'>", unsafe_allow_html=True)
     try:
         st.image(
             "WhatsApp Image 2026-08-30 at 13.01.42.jpeg",
-            caption="👩‍🏫 Guru Koordinator Perpustakaan",
             use_container_width=True,
         )
     except Exception:
         st.write("📷 *(Foto Guru/Koordinator Perpustakaan)*")
+    
+    st.markdown(
+        """
+        <div class='teacher-name'>👩‍🏫 Herda Putri S.Pd</div>
+        <div class='teacher-title'>📖 Koordinator Perpustakaan</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # 3. SUB-HEADER & DEKORASI
 st.markdown(
@@ -156,10 +196,6 @@ with tab1:
             ],
         )
 
-        # Fitur foto kamera untuk siswa
-        st.write("📸 **Ambil Foto Kamu (Opsional):**")
-        foto_siswa = st.camera_input("Senyum dulu sebelum masuk! 😃")
-
         submit_button = st.form_submit_button(
             label="🚀 Masuk & Catat Kehadiran 🚀"
         )
@@ -189,14 +225,6 @@ with tab1:
             st.session_state.rekap_data = pd.concat(
                 [st.session_state.rekap_data, data_baru], ignore_index=True
             )
-
-            # Jika siswa mengambil foto saat absen
-            if foto_siswa is not None:
-                st.image(
-                    foto_siswa,
-                    caption=f"Foto Presensi {nama}",
-                    width=200,
-                )
 
             # Efek Animasi Balon & Toast
             st.balloons()
