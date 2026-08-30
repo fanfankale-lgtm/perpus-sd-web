@@ -87,6 +87,15 @@ st.markdown(
     "<div style='text-align: center;'>☁️ 🎈 ☁️ <span class='bee-animation'>🐝</span> ☁️</div>",
     unsafe_allow_html=True,
 )
+
+# --- MENAMPILKAN FOTO DARI WHATSAPP ---
+col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
+with col_img2:
+    try:
+        st.image("WhatsApp Image 2026-08-30 at 13.01.42.jpeg", width=160)
+    except Exception:
+        st.write("📷 *(Foto/Logo akan muncul di sini)*")
+
 st.markdown(
     "<h1 class='main-header'>🏫 SDN 13 PADANG PANJANG TIMUR 📚</h1>",
     unsafe_allow_html=True,
@@ -138,6 +147,10 @@ with tab1:
             ],
         )
 
+        # Fitur foto kamera untuk siswa
+        st.write("📸 **Ambil Foto Kamu (Opsional):**")
+        foto_siswa = st.camera_input("Senyum dulu sebelum masuk! 😃")
+
         submit_button = st.form_submit_button(
             label="🚀 Masuk & Catat Kehadiran 🚀"
         )
@@ -151,17 +164,30 @@ with tab1:
             st.warning("⚠️ Eits, isi dulu nama, kelas, dan tujuanmu ya!")
         else:
             # Simpan Data dengan Waktu WIB (Asia/Jakarta)
-            waktu_wib = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
+            waktu_wib = datetime.now(
+                zoneinfo.ZoneInfo("Asia/Jakarta")
+            ).strftime("%Y-%m-%d %H:%M:%S")
             data_baru = pd.DataFrame(
                 [[waktu_wib, nama, kelas, tujuan]],
-                columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"],
+                columns=[
+                    "Waktu (WIB)",
+                    "Nama Siswa",
+                    "Kelas",
+                    "Tujuan / Alasan",
+                ],
             )
 
             st.session_state.rekap_data = pd.concat(
                 [st.session_state.rekap_data, data_baru], ignore_index=True
             )
+
+            # Jika siswa mengambil foto
+            if foto_siswa is not None:
+                st.image(
+                    foto_siswa,
+                    caption=f"Foto Presensi {nama}",
+                    width=200,
+                )
 
             # Efek Animasi Balon & Toast
             st.balloons()
@@ -192,9 +218,11 @@ with tab2:
     else:
         st.dataframe(st.session_state.rekap_data, use_container_width=True)
 
-        # Tombol Download
+        # Tombol Download Data Rekap
         csv = st.session_state.rekap_data.to_csv(index=False).encode("utf-8")
-        waktu_file = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime("%Y%m%d")
+        waktu_file = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime(
+            "%Y%m%d"
+        )
         st.download_button(
             label="📥 Download Data Rekap (CSV)",
             data=csv,
@@ -202,7 +230,7 @@ with tab2:
             mime="text/csv",
         )
 
-        # OPTION RESET REKAP DATA
+        # Opsi Reset Data Rekap
         st.write("---")
         st.subheader("⚙️ Area Kontrol Guru")
 
@@ -214,8 +242,13 @@ with tab2:
 
             if st.button("🔴 Reset Seluruh Data", disabled=not konfirmasi):
                 st.session_state.rekap_data = pd.DataFrame(
-                    columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+                    columns=[
+                        "Waktu (WIB)",
+                        "Nama Siswa",
+                        "Kelas",
+                        "Tujuan / Alasan",
+                    ]
                 )
-                st.snow()  # Animasi Salju saat reset
+                st.snow()
                 st.success("Berhasil! Seluruh data rekap telah dibersihkan.")
                 st.rerun()
