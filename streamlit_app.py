@@ -88,18 +88,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- MENAMPILKAN FOTO DARI WHATSAPP ---
-col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
-with col_img2:
-    try:
-        st.image("WhatsApp Image 2026-08-30 at 13.01.42.jpeg", width=160)
-    except Exception:
-        st.write("📷 *(Foto/Logo akan muncul di sini)*")
-
+# 1. JUDUL UTAMA
 st.markdown(
     "<h1 class='main-header'>🏫 SDN 13 PADANG PANJANG TIMUR 📚</h1>",
     unsafe_allow_html=True,
 )
+
+# 2. FOTO DI TENGAN-TENGAH (Di bawah Judul Utama)
+col_left, col_center, col_right = st.columns([1, 2, 1])
+with col_center:
+    try:
+        st.image("WhatsApp Image 2026-08-30 at 13.01.42.jpeg", use_column_width=True)
+    except Exception:
+        st.write("📷 *(Foto/Logo akan muncul di sini)*")
+
+# 3. SUB JUDUL & DEKORASI
 st.markdown(
     "<h3 class='sub-header'>✨ Sistem Presensi Digital Perpustakaan Ceria ✨</h3>",
     unsafe_allow_html=True,
