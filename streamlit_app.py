@@ -1,10 +1,40 @@
 from datetime import datetime
+import random
 import pandas as pd
 import streamlit as st
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(
-    page_title="Perpustakaan Ceria SD", page_icon="🦁", layout="centered"
+    page_title="Perpustakaan SDN 13 Padang Panjang Timur",
+    page_icon="📚",
+    layout="centered",
+)
+
+# --- CSS CUSTOM UNTUK TAMPILAN MENARIK ---
+st.markdown(
+    """
+    <style>
+    /* Styling Header */
+    .main-header {
+        text-align: center;
+        color: #1E3A8A;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+    }
+    .sub-header {
+        text-align: center;
+        color: #D97706;
+        font-weight: bold;
+    }
+    /* Card Container */
+    .stForm {
+        background-color: #F3F4F6;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
 )
 
 # --- DATABASE SEDERHANA (Session State) ---
@@ -15,16 +45,23 @@ if "rekap_data" not in st.session_state:
 
 # --- DAFTAR PESAN LUCU ---
 PESAN_LUCU = [
-    "Wah, calon profesor datang! Selamat membaca! 📚✨",
+    "Wah, calon profesor dari SDN 13 datang! Selamat membaca! 📚✨",
     "Buku adalah jendela dunia, kamu baru saja membuka pintunya! 🚪🌟",
     "Jangan lupa kembalikan buku ya, nanti bukunya kangen! 🦉📖",
     "Hebat banget! Otak kamu makin cerdas hari ini! 🧠⚡",
     "Ssstt... jangan berisik ya, buku-bukunya lagi tidur! 🤫💤",
+    "Salam literasi dari SDN 13 Padang Panjang Timur! 🏆🎨",
 ]
 
-# --- TAMPILAN UTAMA ---
-st.title("🦁 PERPUSTAKAAN CERIA SD 🦁")
-st.subheader("Satu Buku, Jutaan Petualangan! ✨")
+# --- TAMPILAN UTAMA & HEADER ANIMATIF ---
+st.markdown(
+    "<h1 class='main-header'>🏫 SDN 13 PADANG PANJANG TIMUR 📚</h1>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<h3 class='sub-header'>✨ Sistem Presensi Digital Perpustakaan Ceria ✨</h3>",
+    unsafe_allow_html=True,
+)
 st.write("---")
 
 # Tab untuk Presensi dan Rekap
@@ -33,13 +70,13 @@ tab1, tab2 = st.tabs(
 )
 
 with tab1:
-    st.write("### 👤 Data Pengunjung")
+    st.write("### 🎈 Halo Adik-Adik! Yuk Isi Absen Dulu")
 
     with st.form(key="form_presensi", clear_on_submit=True):
-        nama = st.text_input("Nama Lengkap Kamu:")
+        nama = st.text_input("👤 Nama Lengkap Kamu:")
 
         kelas = st.selectbox(
-            "Kelas Berapa?",
+            "🏫 Kelas Berapa?",
             [
                 "-- Pilih Kelas --",
                 "1-A",
@@ -58,7 +95,7 @@ with tab1:
         )
 
         tujuan = st.selectbox(
-            "Mau Ngapain di Perpus?",
+            "🎯 Mau Ngapain di Perpus?",
             [
                 "-- Pilih Tujuan --",
                 "Pinjam Buku 📚",
@@ -70,7 +107,7 @@ with tab1:
         )
 
         submit_button = st.form_submit_button(
-            label="✨ Masuk & Catat Kehadiran ✨"
+            label="🚀 Masuk & Catat Kehadiran 🚀"
         )
 
     if submit_button:
@@ -92,28 +129,58 @@ with tab1:
                 [st.session_state.rekap_data, data_baru], ignore_index=True
             )
 
-            # Efek Lucu & Pesan Sukses
+            # Efek Animasi Balon & Toast
             st.balloons()
-            st.success(f"🎉 Yeay! Data **{nama}** berhasil dicatat!")
+            st.toast("Data kehadiran berhasil disimpan! 🎉", icon="✅")
+            st.success(
+                f"🎉 Yeay! Data **{nama}** berhasil dicatat di sistem SDN 13!"
+            )
 
             # Pesan acak
-            import random
-
             st.info(random.choice(PESAN_LUCU))
 
 with tab2:
-    st.write("### 📋 Rekap Kehadiran Hari Ini")
+    st.write("### 📋 Dashboard Rekap Kehadiran Guru")
+
+    # Statistik Ringkas
+    total_pengunjung = len(st.session_state.rekap_data)
+    col1, col2 = st.columns(2)
+    col1.metric("Total Pengunjung Hari Ini", f"{total_pengunjung} Siswa")
+
+    if not st.session_state.rekap_data.empty:
+        kelas_terbanyak = st.session_state.rekap_data["Kelas"].mode()[0]
+        col2.metric("Kelas Paling Ramai", kelas_terbanyak)
+
+    st.write("---")
 
     if st.session_state.rekap_data.empty:
-        st.write("Belum ada pengunjung yang mencatatkan kehadiran.")
+        st.info("📌 Belum ada pengunjung yang mencatatkan kehadiran.")
     else:
         st.dataframe(st.session_state.rekap_data, use_container_width=True)
 
-        # Tombol Download Excel/CSV
+        # Tombol Download
         csv = st.session_state.rekap_data.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download Data Rekap (CSV)",
             data=csv,
-            file_name=f"rekap_perpus_{datetime.now().strftime('%Y%m%d')}.csv",
+            file_name=f"rekap_perpus_sdn13_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
         )
+
+        # OPTION RESET REKAP DATA
+        st.write("---")
+        st.subheader("⚙️ Area Kontrol Guru")
+
+        with st.expander("🗑️ Opsi Reset Data Rekap Kehadiran"):
+            st.warning(
+                "Tindakan ini akan menghapus seluruh data presensi di atas!"
+            )
+            konfirmasi = st.checkbox("Saya yakin ingin menghapus data rekap")
+
+            if st.button("🔴 Reset Seluruh Data", disabled=not konfirmasi):
+                st.session_state.rekap_data = pd.DataFrame(
+                    columns=["Waktu", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+                )
+                st.snow()  # Animasi Salju saat reset
+                st.success("Berhasil! Seluruh data rekap telah dibersihkan.")
+                st.rerun()
