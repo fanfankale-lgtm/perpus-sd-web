@@ -39,12 +39,14 @@ st.markdown(
         color: #1E3A8A;
         font-family: 'Comic Sans MS', cursive, sans-serif;
         text-shadow: 2px 2px 4px #ffffff;
+        margin-bottom: 10px;
     }
     .sub-header {
         text-align: center;
         color: #D97706;
         font-weight: bold;
         text-shadow: 1px 1px 2px #ffffff;
+        margin-top: 15px;
     }
 
     /* Card Form dengan Efek Transparan Segar */
@@ -94,15 +96,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. FOTO DI TENGAN-TENGAH (Di bawah Judul Utama)
-col_left, col_center, col_right = st.columns([1, 2, 1])
+# 2. FOTO GURU PERPUSTAKAAN (DIBAWAH JUDUL UTAMA & PAS DI TENGAH)
+col_left, col_center, col_right = st.columns([1, 1.5, 1])
 with col_center:
     try:
-        st.image("WhatsApp Image 2026-08-30 at 13.01.42.jpeg", use_column_width=True)
+        st.image(
+            "WhatsApp Image 2026-08-30 at 13.01.42.jpeg",
+            caption="👩‍🏫 Guru Koordinator Perpustakaan",
+            use_container_width=True,
+        )
     except Exception:
-        st.write("📷 *(Foto/Logo akan muncul di sini)*")
+        st.write("📷 *(Foto Guru/Koordinator Perpustakaan)*")
 
-# 3. SUB JUDUL & DEKORASI
+# 3. SUB-HEADER & DEKORASI
 st.markdown(
     "<h3 class='sub-header'>✨ Sistem Presensi Digital Perpustakaan Ceria ✨</h3>",
     unsafe_allow_html=True,
@@ -184,7 +190,7 @@ with tab1:
                 [st.session_state.rekap_data, data_baru], ignore_index=True
             )
 
-            # Jika siswa mengambil foto
+            # Jika siswa mengambil foto saat absen
             if foto_siswa is not None:
                 st.image(
                     foto_siswa,
