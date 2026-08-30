@@ -1,5 +1,6 @@
 from datetime import datetime
 import random
+import zoneinfo
 import pandas as pd
 import streamlit as st
 
@@ -10,27 +11,55 @@ st.set_page_config(
     layout="centered",
 )
 
-# --- CSS CUSTOM UNTUK TAMPILAN MENARIK ---
+# --- CSS CUSTOM: BACKGROUND TAMAN & ANIMASI ---
 st.markdown(
     """
     <style>
+    /* Background Taman Anak-anak */
+    .stApp {
+        background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 85%, #228B22 100%);
+        background-attachment: fixed;
+    }
+
+    /* Animasi Lebah Terbang */
+    @keyframes beeFly {
+        0% { transform: translate(0px, 0px) rotate(0deg); }
+        50% { transform: translate(150px, -20px) rotate(10deg); }
+        100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+    .bee-animation {
+        font-size: 30px;
+        display: inline-block;
+        animation: beeFly 6s infinite ease-in-out;
+    }
+
     /* Styling Header */
     .main-header {
         text-align: center;
         color: #1E3A8A;
         font-family: 'Comic Sans MS', cursive, sans-serif;
+        text-shadow: 2px 2px 4px #ffffff;
     }
     .sub-header {
         text-align: center;
         color: #D97706;
         font-weight: bold;
+        text-shadow: 1px 1px 2px #ffffff;
     }
-    /* Card Container */
+
+    /* Card Form dengan Efek Transparan Segar */
     .stForm {
-        background-color: #F3F4F6;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        background-color: rgba(255, 255, 255, 0.92);
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+        border: 3px solid #78C850;
+    }
+
+    /* Styling Tab */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
     }
     </style>
 """,
@@ -40,7 +69,7 @@ st.markdown(
 # --- DATABASE SEDERHANA (Session State) ---
 if "rekap_data" not in st.session_state:
     st.session_state.rekap_data = pd.DataFrame(
-        columns=["Waktu", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+        columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
     )
 
 # --- DAFTAR PESAN LUCU ---
@@ -53,13 +82,21 @@ PESAN_LUCU = [
     "Salam literasi dari SDN 13 Padang Panjang Timur! 🏆🎨",
 ]
 
-# --- TAMPILAN UTAMA & HEADER ANIMATIF ---
+# --- TAMPILAN UTAMA & DEKORASI TAMAN ---
+st.markdown(
+    "<div style='text-align: center;'>☁️ 🎈 ☁️ <span class='bee-animation'>🐝</span> ☁️</div>",
+    unsafe_allow_html=True,
+)
 st.markdown(
     "<h1 class='main-header'>🏫 SDN 13 PADANG PANJANG TIMUR 📚</h1>",
     unsafe_allow_html=True,
 )
 st.markdown(
     "<h3 class='sub-header'>✨ Sistem Presensi Digital Perpustakaan Ceria ✨</h3>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<div style='text-align: center; font-size: 24px;'>🌻 🛝 🌸 🎡 🌷 🏰 🌼</div>",
     unsafe_allow_html=True,
 )
 st.write("---")
@@ -70,27 +107,22 @@ tab1, tab2 = st.tabs(
 )
 
 with tab1:
-    st.write("### 🎈 Halo Adik-Adik! Yuk Isi Absen Dulu")
+    st.write("### 🎈 Halo Anak-Anak Hebat! Yuk Isi Absen Dulu")
 
     with st.form(key="form_presensi", clear_on_submit=True):
         nama = st.text_input("👤 Nama Lengkap Kamu:")
 
+        # Pilihan Kelas Sederhana (Kelas 1 - Kelas 6)
         kelas = st.selectbox(
             "🏫 Kelas Berapa?",
             [
                 "-- Pilih Kelas --",
-                "1-A",
-                "1-B",
-                "2-A",
-                "2-B",
-                "3-A",
-                "3-B",
-                "4-A",
-                "4-B",
-                "5-A",
-                "5-B",
-                "6-A",
-                "6-B",
+                "Kelas 1",
+                "Kelas 2",
+                "Kelas 3",
+                "Kelas 4",
+                "Kelas 5",
+                "Kelas 6",
             ],
         )
 
@@ -118,11 +150,13 @@ with tab1:
         ):
             st.warning("⚠️ Eits, isi dulu nama, kelas, dan tujuanmu ya!")
         else:
-            # Simpan Data
-            waktu_sekarang = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Simpan Data dengan Waktu WIB (Asia/Jakarta)
+            waktu_wib = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             data_baru = pd.DataFrame(
-                [[waktu_sekarang, nama, kelas, tujuan]],
-                columns=["Waktu", "Nama Siswa", "Kelas", "Tujuan / Alasan"],
+                [[waktu_wib, nama, kelas, tujuan]],
+                columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"],
             )
 
             st.session_state.rekap_data = pd.concat(
@@ -133,7 +167,7 @@ with tab1:
             st.balloons()
             st.toast("Data kehadiran berhasil disimpan! 🎉", icon="✅")
             st.success(
-                f"🎉 Yeay! Data **{nama}** berhasil dicatat di sistem SDN 13!"
+                f"🎉 Yeay! Data **{nama}** berhasil dicatat pada jam **{waktu_wib} WIB**!"
             )
 
             # Pesan acak
@@ -160,10 +194,11 @@ with tab2:
 
         # Tombol Download
         csv = st.session_state.rekap_data.to_csv(index=False).encode("utf-8")
+        waktu_file = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime("%Y%m%d")
         st.download_button(
             label="📥 Download Data Rekap (CSV)",
             data=csv,
-            file_name=f"rekap_perpus_sdn13_{datetime.now().strftime('%Y%m%d')}.csv",
+            file_name=f"rekap_perpus_sdn13_{waktu_file}.csv",
             mime="text/csv",
         )
 
@@ -179,7 +214,7 @@ with tab2:
 
             if st.button("🔴 Reset Seluruh Data", disabled=not konfirmasi):
                 st.session_state.rekap_data = pd.DataFrame(
-                    columns=["Waktu", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+                    columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
                 )
                 st.snow()  # Animasi Salju saat reset
                 st.success("Berhasil! Seluruh data rekap telah dibersihkan.")
