@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 import random
 import zoneinfo
 import pandas as pd
@@ -15,14 +16,34 @@ st.set_page_config(
 VALID_USERNAME = "Herda_Putri"
 VALID_PASSWORD = "Bukuadalahpintudunia"
 
+# --- NAMA FILE PENYIMPANAN PERMANEN ---
+DATA_FILE = "rekap_presensi.csv"
+KOLOM_DATA = ["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+
+
+# --- FUNGSI LOAD & SAVE DATA PERMANEN ---
+def load_data():
+    """Membaca data rekap dari file CSV lokal jika ada, atau buat DataFrame kosong."""
+    if os.path.exists(DATA_FILE):
+        try:
+            return pd.read_csv(DATA_FILE)
+        except Exception:
+            return pd.DataFrame(columns=KOLOM_DATA)
+    else:
+        return pd.DataFrame(columns=KOLOM_DATA)
+
+
+def save_data(df):
+    """Menyimpan DataFrame ke file CSV lokal secara permanen."""
+    df.to_csv(DATA_FILE, index=False)
+
+
 # --- INISIALISASI SESSION STATE ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if "rekap_data" not in st.session_state:
-    st.session_state.rekap_data = pd.DataFrame(
-        columns=["Waktu (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
-    )
+    st.session_state.rekap_data = load_data()
 
 # --- CSS CUSTOM: BACKGROUND TAMAN & EFEK ANIMASI KEREN & LUCU ---
 st.markdown(
@@ -221,20 +242,31 @@ if not st.session_state.authenticated:
                 "<h3 style='text-align: center; color: #1E3A8A;'>🔐 Silakan Login Terlebih Dahulu</h3>",
                 unsafe_allow_html=True,
             )
-            input_user = st.text_input("👤 Username", placeholder="Masukkan Username")
+            input_user = st.text_input(
+                "👤 Username", placeholder="Masukkan Username"
+            )
             input_pass = st.text_input(
                 "🔑 Password", type="password", placeholder="Masukkan Password"
             )
-            btn_login = st.form_submit_button("🚀 Masuk Ke Aplikasi 🚀", use_container_width=True)
+            btn_login = st.form_submit_button(
+                "🚀 Masuk Ke Aplikasi 🚀", use_container_width=True
+            )
 
             if btn_login:
-                if input_user == VALID_USERNAME and input_pass == VALID_PASSWORD:
+                if (
+                    input_user == VALID_USERNAME
+                    and input_pass == VALID_PASSWORD
+                ):
                     st.session_state.authenticated = True
-                    st.success("🎉 Login Berhasil! Selamat datang Ibu Herda Putri.")
+                    st.success(
+                        "🎉 Login Berhasil! Selamat datang Ibu Herda Putri."
+                    )
                     st.balloons()
                     st.rerun()
                 else:
-                    st.error("❌ Username atau Password salah! Periksa kembali ya.")
+                    st.error(
+                        "❌ Username atau Password salah! Periksa kembali ya."
+                    )
 
 # ==========================================
 # HALAMAN UTAMA (JIKA SUDAH LOG IN)
@@ -344,19 +376,18 @@ else:
                 waktu_wib = datetime.now(
                     zoneinfo.ZoneInfo("Asia/Jakarta")
                 ).strftime("%Y-%m-%d %H:%M:%S")
+
                 data_baru = pd.DataFrame(
-                    [[waktu_wib, nama, kelas, tujuan]],
-                    columns=[
-                        "Waktu (WIB)",
-                        "Nama Siswa",
-                        "Kelas",
-                        "Tujuan / Alasan",
-                    ],
+                    [[waktu_wib, nama, kelas, tujuan]], columns=KOLOM_DATA
                 )
 
+                # Gabungkan data lama dan data baru
                 st.session_state.rekap_data = pd.concat(
                     [st.session_state.rekap_data, data_baru], ignore_index=True
                 )
+
+                # Simpan PERMANEN ke file CSV lokal
+                save_data(st.session_state.rekap_data)
 
                 # Efek Animasi Balon & Toast
                 st.balloons()
@@ -374,7 +405,7 @@ else:
         # Statistik Ringkas
         total_pengunjung = len(st.session_state.rekap_data)
         col1, col2 = st.columns(2)
-        col1.metric("Total Pengunjung Hari Ini", f"{total_pengunjung} Siswa")
+        col1.metric("Total Pengunjung", f"{total_pengunjung} Siswa")
 
         if not st.session_state.rekap_data.empty:
             kelas_terbanyak = st.session_state.rekap_data["Kelas"].mode()[0]
@@ -388,10 +419,12 @@ else:
             st.dataframe(st.session_state.rekap_data, use_container_width=True)
 
             # Tombol Download Data Rekap
-            csv = st.session_state.rekap_data.to_csv(index=False).encode("utf-8")
-            waktu_file = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).strftime(
-                "%Y%m%d"
+            csv = st.session_state.rekap_data.to_csv(index=False).encode(
+                "utf-8"
             )
+            waktu_file = datetime.now(
+                zoneinfo.ZoneInfo("Asia/Jakarta")
+            ).strftime("%Y%m%d")
             st.download_button(
                 label="📥 Download Data Rekap (CSV)",
                 data=csv,
@@ -405,19 +438,21 @@ else:
 
             with st.expander("🗑️ Opsi Reset Data Rekap Kehadiran"):
                 st.warning(
-                    "Tindakan ini akan menghapus seluruh data presensi di atas!"
+                    "Tindakan ini akan menghapus seluruh data presensi baik di tampilan maupun di penyimpanan file!"
                 )
-                konfirmasi = st.checkbox("Saya yakin ingin menghapus data rekap")
+                konfirmasi = st.checkbox(
+                    "Saya yakin ingin menghapus data rekap"
+                )
 
                 if st.button("🔴 Reset Seluruh Data", disabled=not konfirmasi):
+                    # Kosongkan data di session state dan file CSV
                     st.session_state.rekap_data = pd.DataFrame(
-                        columns=[
-                            "Waktu (WIB)",
-                            "Nama Siswa",
-                            "Kelas",
-                            "Tujuan / Alasan",
-                        ]
+                        columns=KOLOM_DATA
                     )
+                    save_data(st.session_state.rekap_data)
+
                     st.snow()
-                    st.success("Berhasil! Seluruh data rekap telah dibersihkan.")
+                    st.success(
+                        "Berhasil! Seluruh data rekap telah dibersihkan secara permanen."
+                    )
                     st.rerun()
