@@ -1,5 +1,4 @@
 from datetime import datetime
-import io
 import os
 import random
 import zoneinfo
@@ -17,35 +16,9 @@ st.set_page_config(
 VALID_USERNAME = "Herda_Putri"
 VALID_PASSWORD = "Bukuadalahpintudunia"
 
-# --- NAMA FILE PENYIMPANAN PERMANEN & KOLOM DATA REKAP ---
+# --- NAMA FILE PENYIMPANAN PERMANEN ---
 DATA_FILE = "rekap_presensi.csv"
-KOLOM_DATA = ["Tanggal Presensi", "Hari", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
-
-# --- KAMUS TRANSLASI HARI & BULAN KE BAHASA INDONESIA ---
-HARI_INDONESIA = {
-    "Monday": "Senin",
-    "Tuesday": "Selasa",
-    "Wednesday": "Rabu",
-    "Thursday": "Kamis",
-    "Friday": "Jumat",
-    "Saturday": "Sabtu",
-    "Sunday": "Minggu",
-}
-
-BULAN_INDONESIA = {
-    1: "Januari",
-    2: "Februari",
-    3: "Maret",
-    4: "April",
-    5: "Mei",
-    6: "Juni",
-    7: "Juli",
-    8: "Agustus",
-    9: "September",
-    10: "Oktober",
-    11: "November",
-    12: "Desember",
-}
+KOLOM_DATA = ["Waktu (WIB)", "Tanggal Input", "Hari", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
 
 
 # --- FUNGSI LOAD & SAVE DATA PERMANEN ---
@@ -54,10 +27,10 @@ def load_data():
     if os.path.exists(DATA_FILE):
         try:
             df = pd.read_csv(DATA_FILE)
-            # Pastikan kolom sesuai dengan struktur terbaru
+            # Memastikan kompatibilitas jika ada file lama yang belum punya kolom 'Tanggal Input' atau 'Hari'
             for col in KOLOM_DATA:
                 if col not in df.columns:
-                    df[col] = ""
+                    df[col] = "-"
             return df[KOLOM_DATA]
         except Exception:
             return pd.DataFrame(columns=KOLOM_DATA)
@@ -68,16 +41,6 @@ def load_data():
 def save_data(df):
     """Menyimpan DataFrame ke file CSV lokal secara permanen."""
     df.to_csv(DATA_FILE, index=False)
-
-
-# --- FUNGSI EXPORT KE EXCEL ---
-def to_excel(df):
-    """Mengonversi DataFrame ke format file Excel (.xlsx) di memory buffer."""
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Rekap Presensi")
-    processed_data = output.getvalue()
-    return processed_data
 
 
 # --- INISIALISASI SESSION STATE ---
@@ -242,7 +205,7 @@ st.markdown(
     }
     </style>
 
-    <!-- HTML Element Animasi Background -->
+    <!-- HTML ELement Animasi Background -->
     <div class="animated-bg-container">
         <div class="cloud1">☁️</div>
         <div class="cloud2">🌤️</div>
@@ -261,6 +224,17 @@ PESAN_LUCU = [
     "Ssstt... jangan berisik ya, buku-bukunya lagi tidur! 🤫💤",
     "Salam literasi dari SDN 13 Padang Panjang Timur! 🏆🎨",
 ]
+
+# --- KAMUS TRANSLASI HARI KE BAHASA INDONESIA ---
+HARI_INDONESIA = {
+    "Monday": "Senin",
+    "Tuesday": "Selasa",
+    "Wednesday": "Rabu",
+    "Thursday": "Kamis",
+    "Friday": "Jumat",
+    "Saturday": "Sabtu",
+    "Sunday": "Minggu",
+}
 
 # ==========================================
 # HALAMAN LOGIN (JIKA BELUM LOG IN)
@@ -374,11 +348,26 @@ else:
         st.write("### 🎈 Halo Anak-Anak Hebat! Yuk Isi Absen Dulu")
 
         with st.form(key="form_presensi", clear_on_submit=True):
-            # Input Tanggal Interaktif Kalender
-            tgl_pilihan = st.date_input(
-                "📅 Tanggal Presensi (Klik untuk pilih Hari/Bulan/Tahun di Kalender):",
-                value=datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta")).date(),
+            # OPSI METODE TANGGAL
+            st.markdown("#### 📅 Pengaturan Tanggal Presensi")
+            mode_tanggal = st.radio(
+                "Pilih Metode Pengisian Tanggal:",
+                ["Otomatis (Hari ini)", "Manual (Pilih Tanggal Sendiri)"],
+                horizontal=True,
             )
+
+            waktu_sekarang = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta"))
+
+            if mode_tanggal == "Manual (Pilih Tanggal Sendiri)":
+                tanggal_terpilih = st.date_input(
+                    "📅 Pilih Tanggal (Hari / Bulan / Tahun):",
+                    value=waktu_sekarang.date(),
+                )
+            else:
+                tanggal_terpilih = waktu_sekarang.date()
+                st.info(f"📆 Tanggal Otomatis Hari Ini: **{tanggal_terpilih.strftime('%d-%m-%Y')}**")
+
+            st.write("---")
 
             nama = st.text_input("👤 Nama Lengkap Kamu:")
 
@@ -420,16 +409,20 @@ else:
             ):
                 st.warning("⚠️ Eits, isi dulu nama, kelas, dan tujuanmu ya!")
             else:
-                # Format Tanggal ke Bahasa Indonesia (Contoh: 15 Oktober 2025)
-                nama_hari_eng = tgl_pilihan.strftime("%A")
-                hari_indo = HARI_INDONESIA.get(nama_hari_eng, nama_hari_eng)
-                
-                bulan_indo = BULAN_INDONESIA.get(tgl_pilihan.month, str(tgl_pilihan.month))
-                tanggal_formatted = f"{tgl_pilihan.day} {bulan_indo} {tgl_pilihan.year}"
+                # 1. Format jam dan timestamp lengkap
+                jam_str = waktu_sekarang.strftime("%H:%M:%S")
+                waktu_wib = f"{tanggal_terpilih.strftime('%Y-%m-%d')} {jam_str}"
 
-                # Buat baris data baru sesuai struktur 5 kolom yang diminta
+                # 2. Format Tanggal Input (DD-MM-YYYY)
+                tanggal_input_str = tanggal_terpilih.strftime("%d-%m-%Y")
+
+                # 3. Mendapatkan Nama Hari dalam Bahasa Indonesia
+                nama_hari_eng = tanggal_terpilih.strftime("%A")
+                hari_indo = HARI_INDONESIA.get(nama_hari_eng, nama_hari_eng)
+
+                # Buat DataFrame Baris Baru
                 data_baru = pd.DataFrame(
-                    [[tanggal_formatted, hari_indo, nama, kelas, tujuan]],
+                    [[waktu_wib, tanggal_input_str, hari_indo, nama, kelas, tujuan]],
                     columns=KOLOM_DATA,
                 )
 
@@ -445,7 +438,7 @@ else:
                 st.balloons()
                 st.toast("Data kehadiran berhasil disimpan! 🎉", icon="✅")
                 st.success(
-                    f"🎉 Yeay! Data **{nama}** berhasil dicatat untuk tanggal **{hari_indo}, {tanggal_formatted}**!"
+                    f"🎉 Yeay! Data **{nama}** berhasil dicatat untuk hari **{hari_indo}, {tanggal_input_str}**!"
                 )
 
                 # Pesan acak
@@ -470,35 +463,19 @@ else:
         else:
             st.dataframe(st.session_state.rekap_data, use_container_width=True)
 
-            st.write("### 📥 Unduh Data Rekap Kehadiran")
+            # Tombol Download Data Rekap
+            csv = st.session_state.rekap_data.to_csv(index=False).encode(
+                "utf-8"
+            )
             waktu_file = datetime.now(
                 zoneinfo.ZoneInfo("Asia/Jakarta")
             ).strftime("%Y%m%d")
-
-            col_dl1, col_dl2 = st.columns(2)
-
-            # 1. Tombol Download CSV
-            csv_data = st.session_state.rekap_data.to_csv(index=False).encode("utf-8")
-            col_dl1.download_button(
-                label="📄 Unduh Format CSV (.csv)",
-                data=csv_data,
+            st.download_button(
+                label="📥 Download Data Rekap (CSV)",
+                data=csv,
                 file_name=f"rekap_perpus_sdn13_{waktu_file}.csv",
                 mime="text/csv",
-                use_container_width=True,
             )
-
-            # 2. Tombol Download Excel
-            try:
-                excel_data = to_excel(st.session_state.rekap_data)
-                col_dl2.download_button(
-                    label="📗 Unduh Format Excel (.xlsx)",
-                    data=excel_data,
-                    file_name=f"rekap_perpus_sdn13_{waktu_file}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                )
-            except Exception:
-                col_dl2.warning("Install `openpyxl` untuk mengaktifkan unduh Excel.")
 
             # Opsi Reset Data Rekap
             st.write("---")
