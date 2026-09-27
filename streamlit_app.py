@@ -22,7 +22,7 @@ st.set_page_config(
 
 # --- USER CREDENTIALS ---
 VALID_USERNAME = "Herda_Putri"
-VALID_PASSWORD = "110198"
+VALID_PASSWORD = "Bukuadalahpintudunia"
 
 # --- NAMA FILE PENYIMPANAN & KOLOM DATA ---
 DATA_FILE = "rekap_presensi.csv"
@@ -186,4 +186,5 @@ if "rekap_data" not in st.session_state:
     st.session_state.rekap_data = load_data()
 
 # --- CSS CUSTOM & STYLING ---
-CSS_STYLE = """
+st.markdown(
+    """
