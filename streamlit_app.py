@@ -1,11 +1,11 @@
 import io
+import os
 import random
 import zoneinfo
 from datetime import datetime
 
 import pandas as pd
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
 
 # Import library untuk pembuatan dokumen PDF
 from reportlab.lib import colors
@@ -25,26 +25,34 @@ VALID_USERNAME = "Herda_Putri"
 VALID_PASSWORD = "110198"
 
 KOLOM_DATA = ["Tanggal", "Jam (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
-
-# --- KONEKSI KE GOOGLE SHEETS ---
-conn = st.connection("gsheets", type=GSheetsConnection)
+FILE_LOCAL_CSV = "rekap_presensi.csv"
 
 
-def load_data_from_sheets():
-    """Membaca data rekap dari Google Sheets."""
+# --- FUNGSI MANAJEMEN DATA LOKAL & SESSION STATE ---
+def init_data():
+    """Membaca data dari memori sesi atau file CSV lokal jika ada."""
+    if "rekap_df" not in st.session_state:
+        if os.path.exists(FILE_LOCAL_CSV):
+            try:
+                df = pd.read_csv(FILE_LOCAL_CSV)
+                if len(df.columns) == 5:
+                    df.columns = KOLOM_DATA
+                    st.session_state.rekap_df = df
+                else:
+                    st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
+            except Exception:
+                st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
+        else:
+            st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
+
+
+def save_data(df):
+    """Menyimpan data ke session state dan file lokal."""
+    st.session_state.rekap_df = df
     try:
-        df = conn.read(ttl="0s")
-        if df.empty or len(df.columns) < 5:
-            return pd.DataFrame(columns=KOLOM_DATA)
-        df.columns = KOLOM_DATA
-        return df
+        df.to_csv(FILE_LOCAL_CSV, index=False)
     except Exception:
-        return pd.DataFrame(columns=KOLOM_DATA)
-
-
-def save_data_to_sheets(df):
-    """Menyimpan seluruh DataFrame ke Google Sheets secara permanen."""
-    conn.update(data=df)
+        pass
 
 
 # --- FUNGSI GENERATE PDF REKAP ---
@@ -172,7 +180,10 @@ def generate_pdf(df):
     return pdf_value
 
 
-# --- INISIALISASI SESSION STATE ---
+# Inisialisasi data di awal
+init_data()
+
+# --- INISIALISASI SESSION STATE UNTUK LOGIN ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
