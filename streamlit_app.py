@@ -15,7 +15,7 @@ st.set_page_config(
 
 # --- USER CREDENTIALS ---
 VALID_USERNAME = "Herda_Putri"
-VALID_PASSWORD = "Bukuadalahpintudunia"
+VALID_PASSWORD = "110198"
 
 # --- NAMA FILE PENYIMPANAN PERMANEN & KOLOM DATA REKAP ---
 DATA_FILE = "rekap_presensi.csv"
