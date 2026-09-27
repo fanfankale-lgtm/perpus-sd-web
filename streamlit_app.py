@@ -22,37 +22,34 @@ st.set_page_config(
 
 # --- USER CREDENTIALS ---
 VALID_USERNAME = "Herda_Putri"
-VALID_PASSWORD = "110198"
+VALID_PASSWORD = "Bukuadalahpintudunia"
 
+# --- NAMA FILE PENYIMPANAN & KOLOM DATA ---
+DATA_FILE = "rekap_presensi.csv"
 KOLOM_DATA = ["Tanggal", "Jam (WIB)", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
-FILE_LOCAL_CSV = "rekap_presensi.csv"
 
 
-# --- FUNGSI MANAJEMEN DATA LOKAL & SESSION STATE ---
-def init_data():
-    """Membaca data dari memori sesi atau file CSV lokal jika ada."""
-    if "rekap_df" not in st.session_state:
-        if os.path.exists(FILE_LOCAL_CSV):
-            try:
-                df = pd.read_csv(FILE_LOCAL_CSV)
-                if len(df.columns) == 5:
-                    df.columns = KOLOM_DATA
-                    st.session_state.rekap_df = df
-                else:
-                    st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
-            except Exception:
-                st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
-        else:
-            st.session_state.rekap_df = pd.DataFrame(columns=KOLOM_DATA)
+# --- FUNGSI LOAD & SAVE DATA PERMANEN ---
+def load_data():
+    """Membaca data rekap dari file CSV lokal jika ada, atau buat DataFrame kosong."""
+    if os.path.exists(DATA_FILE):
+        try:
+            df = pd.read_csv(DATA_FILE)
+            # Pastikan kolom sesuai dengan format terbaru
+            if len(df.columns) == len(KOLOM_DATA):
+                df.columns = KOLOM_DATA
+                return df
+            else:
+                return pd.DataFrame(columns=KOLOM_DATA)
+        except Exception:
+            return pd.DataFrame(columns=KOLOM_DATA)
+    else:
+        return pd.DataFrame(columns=KOLOM_DATA)
 
 
 def save_data(df):
-    """Menyimpan data ke session state dan file lokal."""
-    st.session_state.rekap_df = df
-    try:
-        df.to_csv(FILE_LOCAL_CSV, index=False)
-    except Exception:
-        pass
+    """Menyimpan DataFrame ke file CSV lokal secara permanen."""
+    df.to_csv(DATA_FILE, index=False)
 
 
 # --- FUNGSI GENERATE PDF REKAP ---
@@ -126,6 +123,7 @@ def generate_pdf(df):
     )
     elements.append(Spacer(1, 15))
 
+    # Judul Header Tabel PDF
     table_data = [[
         Paragraph("**No**", header_cell_style),
         Paragraph("**Tanggal**", header_cell_style),
@@ -135,6 +133,7 @@ def generate_pdf(df):
         Paragraph("**Tujuan / Alasan**", header_cell_style),
     ]]
 
+    # Baris Data Tabel PDF
     for idx, row in df.iterrows():
         table_data.append([
             Paragraph(str(idx + 1), cell_style),
@@ -180,31 +179,13 @@ def generate_pdf(df):
     return pdf_value
 
 
-# Inisialisasi data di awal
-init_data()
-
-# --- INISIALISASI SESSION STATE UNTUK LOGIN ---
+# --- INISIALISASI SESSION STATE ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- CSS STYLING ---
+if "rekap_data" not in st.session_state:
+    st.session_state.rekap_data = load_data()
+
+# --- CSS CUSTOM & STYLING ---
 st.markdown(
     """
-    
-    """,
-    unsafe_allow_html=True,
-)
-
-PESAN_LUCU = [
-    "Wah, calon profesor dari SDN 13 datang! Selamat membaca! 📚✨",
-    "Buku adalah jendela dunia, kamu baru saja membuka pintunya! 🚪🌟",
-    "Jangan lupa kembalikan buku ya, nanti bukunya kangen! 🦉📖",
-    "Hebat banget! Otak kamu makin cerdas hari ini! 🧠⚡",
-    "Salam literasi dari SDN 13 Padang Panjang Timur! 🏆🎨",
-]
-
-# ==========================================
-# HALAMAN LOGIN
-# ==========================================
-if not st.session_state.authenticated:
-    st.markdown("
