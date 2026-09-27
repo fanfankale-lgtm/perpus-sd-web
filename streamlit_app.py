@@ -14,12 +14,29 @@ st.set_page_config(
 
 # --- USER CREDENTIALS ---
 VALID_USERNAME = "Herda_Putri"
-VALID_PASSWORD = "110198"
+VALID_PASSWORD = "Bukuadalahpintudunia"
 
 # --- NAMA FILE PENYIMPANAN PERMANEN ---
 DATA_FILE = "rekap_presensi.csv"
-KOLOM_DATA = ["Waktu (WIB)", "Tanggal Input", "Hari", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
+KOLOM_DATA = ["Waktu Input", "Tanggal Presensi", "Hari", "Nama Siswa", "Kelas", "Tujuan / Alasan"]
 
+# --- DICTIONARY NAMA HARI INDONESIA ---
+NAMA_HARI = {
+    "Monday": "Senin",
+    "Tuesday": "Selasa",
+    "Wednesday": "Rabu",
+    "Thursday": "Kamis",
+    "Friday": "Jumat",
+    "Saturday": "Sabtu",
+    "Sunday": "Minggu"
+}
+
+# --- DICTIONARY NAMA BULAN INDONESIA ---
+NAMA_BULAN = {
+    1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+    5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+    9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+}
 
 # --- FUNGSI LOAD & SAVE DATA PERMANEN ---
 def load_data():
@@ -27,7 +44,7 @@ def load_data():
     if os.path.exists(DATA_FILE):
         try:
             df = pd.read_csv(DATA_FILE)
-            # Memastikan kompatibilitas jika ada file lama yang belum punya kolom 'Tanggal Input' atau 'Hari'
+            # Menjamin kompatibilitas kolom jika ada versi rekap data lama
             for col in KOLOM_DATA:
                 if col not in df.columns:
                     df[col] = "-"
@@ -225,17 +242,6 @@ PESAN_LUCU = [
     "Salam literasi dari SDN 13 Padang Panjang Timur! 🏆🎨",
 ]
 
-# --- KAMUS TRANSLASI HARI KE BAHASA INDONESIA ---
-HARI_INDONESIA = {
-    "Monday": "Senin",
-    "Tuesday": "Selasa",
-    "Wednesday": "Rabu",
-    "Thursday": "Kamis",
-    "Friday": "Jumat",
-    "Saturday": "Sabtu",
-    "Sunday": "Minggu",
-}
-
 # ==========================================
 # HALAMAN LOGIN (JIKA BELUM LOG IN)
 # ==========================================
@@ -348,30 +354,20 @@ else:
         st.write("### 🎈 Halo Anak-Anak Hebat! Yuk Isi Absen Dulu")
 
         with st.form(key="form_presensi", clear_on_submit=True):
-            # OPSI METODE TANGGAL
-            st.markdown("#### 📅 Pengaturan Tanggal Presensi")
-            mode_tanggal = st.radio(
-                "Pilih Metode Pengisian Tanggal:",
-                ["Otomatis (Hari ini)", "Manual (Pilih Tanggal Sendiri)"],
-                horizontal=True,
+            # 1. SISTEM KALENDER POP-UP INTERAKTIF (st.date_input)
+            sekarang_wib = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta"))
+            
+            tanggal_dipilih = st.date_input(
+                "📅 Pilih Tanggal Kehadiran (Klik kotak di bawah untuk memilih via Kalender):",
+                value=sekarang_wib.date(),
+                format="DD/MM/YYYY",
+                help="Klik komponen ini untuk memilih tanggal, bulan, dan tahun melalui visual kalender digital."
             )
 
-            waktu_sekarang = datetime.now(zoneinfo.ZoneInfo("Asia/Jakarta"))
-
-            if mode_tanggal == "Manual (Pilih Tanggal Sendiri)":
-                tanggal_terpilih = st.date_input(
-                    "📅 Pilih Tanggal (Hari / Bulan / Tahun):",
-                    value=waktu_sekarang.date(),
-                )
-            else:
-                tanggal_terpilih = waktu_sekarang.date()
-                st.info(f"📆 Tanggal Otomatis Hari Ini: **{tanggal_terpilih.strftime('%d-%m-%Y')}**")
-
-            st.write("---")
-
+            # 2. NAMA LENGKAP
             nama = st.text_input("👤 Nama Lengkap Kamu:")
 
-            # Pilihan Kelas Sederhana (Kelas 1 - Kelas 6)
+            # 3. PILIHAN KELAS
             kelas = st.selectbox(
                 "🏫 Kelas Berapa?",
                 [
@@ -385,6 +381,7 @@ else:
                 ],
             )
 
+            # 4. PILIHAN TUJUAN
             tujuan = st.selectbox(
                 "🎯 Mau Ngapain di Perpus?",
                 [
@@ -409,21 +406,18 @@ else:
             ):
                 st.warning("⚠️ Eits, isi dulu nama, kelas, dan tujuanmu ya!")
             else:
-                # 1. Format jam dan timestamp lengkap
-                jam_str = waktu_sekarang.strftime("%H:%M:%S")
-                waktu_wib = f"{tanggal_terpilih.strftime('%Y-%m-%d')} {jam_str}"
+                # Format Jam (Jam:Menit:Detik) saat menekan tombol kirim
+                jam_wib = sekarang_wib.strftime("%H:%M:%S")
 
-                # 2. Format Tanggal Input (DD-MM-YYYY)
-                tanggal_input_str = tanggal_terpilih.strftime("%d-%m-%Y")
+                # Konversi Tanggal Pilihan Kalender ke Format Hari & Tanggal Indonesia
+                nama_hari_eng = tanggal_dipilih.strftime("%A")
+                nama_hari_indo = NAMA_HARI.get(nama_hari_eng, nama_hari_eng)
+                
+                tgl_str = f"{tanggal_dipilih.day} {NAMA_BULAN.get(tanggal_dipilih.month, '')} {tanggal_dipilih.year}"
 
-                # 3. Mendapatkan Nama Hari dalam Bahasa Indonesia
-                nama_hari_eng = tanggal_terpilih.strftime("%A")
-                hari_indo = HARI_INDONESIA.get(nama_hari_eng, nama_hari_eng)
-
-                # Buat DataFrame Baris Baru
+                # Susun Baris Data Baru
                 data_baru = pd.DataFrame(
-                    [[waktu_wib, tanggal_input_str, hari_indo, nama, kelas, tujuan]],
-                    columns=KOLOM_DATA,
+                    [[jam_wib, tgl_str, nama_hari_indo, nama, kelas, tujuan]], columns=KOLOM_DATA
                 )
 
                 # Gabungkan data lama dan data baru
@@ -438,7 +432,7 @@ else:
                 st.balloons()
                 st.toast("Data kehadiran berhasil disimpan! 🎉", icon="✅")
                 st.success(
-                    f"🎉 Yeay! Data **{nama}** berhasil dicatat untuk hari **{hari_indo}, {tanggal_input_str}**!"
+                    f"🎉 Yeay! Data **{nama}** ({kelas}) berhasil dicatat pada hari **{nama_hari_indo}, {tgl_str}** jam **{jam_wib} WIB**!"
                 )
 
                 # Pesan acak
