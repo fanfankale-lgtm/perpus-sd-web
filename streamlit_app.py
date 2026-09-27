@@ -35,7 +35,6 @@ def load_data():
     if os.path.exists(DATA_FILE):
         try:
             df = pd.read_csv(DATA_FILE)
-            # Pastikan kolom sesuai dengan format terbaru
             if len(df.columns) == len(KOLOM_DATA):
                 df.columns = KOLOM_DATA
                 return df
@@ -123,7 +122,7 @@ def generate_pdf(df):
     )
     elements.append(Spacer(1, 15))
 
-    # Judul Header Tabel PDF
+    # Header Tabel PDF
     table_data = [[
         Paragraph("**No**", header_cell_style),
         Paragraph("**Tanggal**", header_cell_style),
